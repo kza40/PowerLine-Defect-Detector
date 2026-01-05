@@ -1,0 +1,17 @@
+
+# Virtual envs
+venv/
+.venv/
+env/
+
+# artifacts / outputs
+runs/
+*.pt
+*.engine
+
+# Datasets 
+dataset/
+data/
+
+# editor
+.vscode/
