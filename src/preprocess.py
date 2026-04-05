@@ -62,11 +62,11 @@ def visualize_preprocessing(image_path):
 
 
 if __name__ == "__main__":
-    # Test on a sample image
+    # Testing on a sample image
     sample_images = list(Path('dataset/train/images').glob('*.jpg'))
     
     if sample_images:
         print(f"Testing preprocessing on: {sample_images[0].name}")
         visualize_preprocessing(sample_images[0])
     else:
-        print("No images found in dataset/train/images/")
+        print("No images found in directory")

@@ -6,6 +6,7 @@ import numpy as np
 import time
 from pathlib import Path
 import tempfile
+from metrics import metrics
 import base64
 from preprocess import preprocess_image
 
@@ -37,10 +38,16 @@ async def health_check():
         "classes": list(model.names.values())
     }
 
+@app.get("/metrics")
+def metric_summary():
+    return metrics.format_summary()
+
 @app.post("/detect")
 async def detect_defects(file: UploadFile = File(...)):
     """Detect defects in uploaded image"""
     
+    time_req0 = time.perf_counter()  # end to end request time
+
     try:
         # Read image
         contents = await file.read()
@@ -50,9 +57,8 @@ async def detect_defects(file: UploadFile = File(...)):
         if img is None:
             raise HTTPException(status_code=400, detail="Invalid image")
         
-        # Preprocess directly without temp file
-        start_time = time.time()
-        
+        time_model0 = time.perf_counter()  # model inference time start
+
         # Apply preprocessing
         lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
         l, a, b = cv2.split(lab)
@@ -63,7 +69,12 @@ async def detect_defects(file: UploadFile = File(...)):
         
         # Run inference
         results = model(preprocessed, conf=0.5, iou=0.45)
-        inference_time = time.time() - start_time
+
+
+        model_ms = (time.perf_counter() - time_model0) * 1000.0
+        total_ms = (time.perf_counter() - time_req0) * 1000.0
+
+        metrics.record(endpoint="/detect", total_ms=total_ms, model_ms=model_ms, ok=True, items=1)
         
         # Extract detections
         detections = []
@@ -84,13 +95,13 @@ async def detect_defects(file: UploadFile = File(...)):
         _, buffer = cv2.imencode('.jpg', annotated)
         img_base64 = base64.b64encode(buffer).decode('utf-8')
         
-        fps = 1 / inference_time if inference_time > 0 else 0
+        fps = 1000.0 / model_ms if model_ms > 0 else 0
         
         return {
             'success': True,
             'detections': detections,
             'num_defects': len(detections),
-            'inference_time_ms': round(inference_time * 1000, 2),
+            'inference_time_ms': round(model_ms * 1000, 2),
             'fps': round(fps, 2),
             'annotated_image_base64': img_base64
         }

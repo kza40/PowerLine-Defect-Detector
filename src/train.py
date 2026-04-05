@@ -33,7 +33,7 @@ def train_model():
         batch=16,
         name='powerline_detector',
         patience=10,
-        device='cpu',  # Change to 'cuda' if you have GPU
+        device='cpu',  # Change to 'cuda' if you have GPU / I dont
         
         # Augmentation
         augment=True,
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     
     metrics = validate_model()
     
-    print("\n✅ Next steps:")
+    print("\n Next steps:")
     print("1. Check: runs/detect/powerline_detector/")
     print("2. Run: python evaluate.py")
     print("3. Run: python api.py")
