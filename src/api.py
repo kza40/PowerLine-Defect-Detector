@@ -1,14 +1,11 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import PlainTextResponse
 from ultralytics import YOLO
 import cv2
 import numpy as np
 import time
-from pathlib import Path
-import tempfile
 from metrics import metrics
 import base64
-from preprocess import preprocess_image
 
 app = FastAPI(
     title="Power Line Defect Detector API",
@@ -20,7 +17,7 @@ app = FastAPI(
 MODEL_PATH = '../runs/detect/powerline_detector/weights/best.pt'
 print(f"Loading model from {MODEL_PATH}...")
 model = YOLO(MODEL_PATH)
-print("✅ Model loaded!")
+print("Model loaded!")
 
 @app.get("/")
 async def root():
@@ -38,7 +35,7 @@ async def health_check():
         "classes": list(model.names.values())
     }
 
-@app.get("/metrics")
+@app.get("/metrics", response_class=PlainTextResponse)
 def metric_summary():
     return metrics.format_summary()
 
@@ -70,12 +67,9 @@ async def detect_defects(file: UploadFile = File(...)):
         # Run inference
         results = model(preprocessed, conf=0.5, iou=0.45)
 
-
+        # timing by 1000 to get milliseconds
         model_ms = (time.perf_counter() - time_model0) * 1000.0
-        total_ms = (time.perf_counter() - time_req0) * 1000.0
 
-        metrics.record(endpoint="/detect", total_ms=total_ms, model_ms=model_ms, ok=True, items=1)
-        
         # Extract detections
         detections = []
         for box in results[0].boxes:
@@ -97,16 +91,25 @@ async def detect_defects(file: UploadFile = File(...)):
         
         fps = 1000.0 / model_ms if model_ms > 0 else 0
         
+        total_ms = (time.perf_counter() - time_req0) * 1000.0
+        metrics.record(endpoint="/detect", total_ms=total_ms, model_ms=model_ms, ok=True, items=1)
+
         return {
             'success': True,
             'detections': detections,
             'num_defects': len(detections),
-            'inference_time_ms': round(model_ms * 1000, 2),
+            'inference_time_ms': round(model_ms, 2),
             'fps': round(fps, 2),
             'annotated_image_base64': img_base64
         }
 
+    except HTTPException:   # using this one to actually get the timing even on bad requests
+        total_ms = (time.perf_counter() - time_req0) * 1000.0
+        metrics.record(endpoint="/detect", total_ms=total_ms, model_ms=None, ok=False, items=1)
+        raise
     except Exception as e:
+        total_ms = (time.perf_counter() - time_req0) * 1000.0
+        metrics.record(endpoint="/detect", total_ms=total_ms, model_ms=None, ok=False, items=1)
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

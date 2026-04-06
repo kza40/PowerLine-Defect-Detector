@@ -39,7 +39,7 @@ def test_on_samples(model_path='../runs/detect/powerline_detector/weights/best.p
     test_images = list(Path('dataset/test/images').glob('*.jpg'))[:num]
     
     if not test_images:
-        print("❌ No test images found!")
+        print(" No test images found!")
         return
     
     output_dir = Path('../runs/detect/test_predictions')
@@ -63,7 +63,7 @@ def test_on_samples(model_path='../runs/detect/powerline_detector/weights/best.p
             conf = float(box.conf)
             print(f"    - {cls_name}: {conf:.2f}")
     
-    print(f"\n✅ Saved to: {output_dir}")
+    print(f"\n Saved to: {output_dir}")
     return output_dir
 
 
