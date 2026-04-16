@@ -13,7 +13,7 @@ def percentile( values: List[float], p: float ):
     rounded_position = math.ceil( target_position )
     zero_based_index = rounded_position - 1
 
-    clamped_index = max( 0, min(len(sorted_values) - 1, zero_based_index) )
+    clamped_index = max( 0, min( len(sorted_values) - 1, zero_based_index ) )
 
     return sorted_values[clamped_index]
 
@@ -23,7 +23,7 @@ class PerEndpointMetrics:
     model_ms: List[float] = field( default_factory=list )
     success_count: int = 0
     error_count: int = 0
-    items: int = 0  # having itmes allows us to do batch detecting later if needed
+    items: int = 0  # having times allows us to do batch detecting later if needed
     first_timestamp: Optional[float] = None
     last_timestamp: Optional[float] = None
 
@@ -35,9 +35,9 @@ class PerEndpointMetrics:
             self.first_timestamp = now
         self.last_timestamp = now
 
-        self.total_ms.append(float(total_ms))
+        self.total_ms.append( float(total_ms) )
         if model_ms is not None:
-            self.model_ms.append(float(model_ms))
+            self.model_ms.append( float(model_ms) )
 
         if was_successful:
             self.success_count += 1
