@@ -10,6 +10,21 @@ Built for power utility inspection workflows to detect:
 - **Normal Insulators** - Baseline for comparison
 
 ---
+## Results
+
+YOLOv8n trained for 50 epochs on 1,000+ labelled aerial images. Final-epoch validation metrics:
+
+| Metric    | Value  |
+| --------- | ------ |
+| mAP50     | ~0.81  |
+| mAP50-95  | ~0.57  |
+| Precision | ~0.82  |
+| Recall    | ~0.76  |
+
+![Training and validation curves](media/results.png)
+
+On CPU, a single request takes about 226 ms on average (~4 requests/s; see [Load Testing](#load-testing-concurrent-requests)).
+
 ## **Sample Predictions**
 ![Example 1](media/test_results.jpg)
 
@@ -246,7 +261,7 @@ ok = 50 err = 0
 avg = 4215.7ms p95 = 5678.8ms
 throughput = 4.11 req/s
 ```
-Annotated-image rendering and base64 encoding were the dominant CPU + payload cost under load. Disabling annotation reduced p95 latency and increased throughput across concurrency levels.
+Disabling annotation did not improve performance: throughput was slightly lower at every concurrency level and p95 latency was higher except at concurrency 25. Annotated-image rendering and base64 encoding are therefore not the bottleneck; model inference on the CPU is. The toggle is still useful for smaller response payloads, but scaling throughput would need batching, a smaller input size, or GPU/ONNX Runtime inference.
 
 ## 🎓 Technical Details
 
