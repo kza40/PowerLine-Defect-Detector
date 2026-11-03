@@ -83,7 +83,7 @@ def validate_model(model_path='../runs/detect/powerline_detector/weights/best.pt
     print("=" * 60)
     
     if metrics.box.map50 >= 0.80:
-        print("\n✅ Model achieved 80%+ mAP - READY FOR RESUME!")
+        print("\n✅ Model reached the 80% mAP50 target")
     else:
         print(f"\n⚠️  Model at {metrics.box.map50*100:.1f}% mAP")
         print("Consider training longer")
